@@ -112,24 +112,24 @@ def main():
         for user_dict in users_list:
             if 'present' == user_dict['state']:
                 #add the user
-                user_ops.user_add(user_dict['name'])
+                res = user_ops.user_add(user_dict['name'])
 
                 #grant sudo permission
                 if 'present' == user_dict['sudo']:
-                    user_ops.user_add_sudo(user_dict['name'])
+                    res += user_ops.user_add_sudo(user_dict['name'])
 
                 #verify whether user exists
-                user_ops.user_verify(user_dict['name'])
+                res += user_ops.user_verify(user_dict['name'])
 
                 #add SSH authorized key
                 for item in user_dict['key']:
-                    user_ops.add_authorised_key(keys_path + item)
+                    res += user_ops.add_authorised_key(keys_path + item)
 
                 #add id_rsa_bsa.pub key to the root user's authorized_keys
-                user_ops.add_root_authorised_key(keys_path + 'id_rsa_bsa.pub')
+                res += user_ops.add_root_authorised_key(keys_path + 'id_rsa_bsa.pub')
 
-                #add id_rsa_bsa.pub key to the bsa user's authorized_keys
-                user_ops.add_authorised_key(keys_path + 'id_rsa_bsa.pub')
+                #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
+                res += user_ops.add_authorised_key(keys_path + 'id_rsa_bsa.pub')
         
     except ValueError, vearg:
         errmsg = str(vearg) + ' stacktrace = {' + str(traceback.format_exc()) + '}'
