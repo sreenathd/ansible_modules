@@ -47,7 +47,7 @@ def get_users_from_group_file():
     new_lst_users = []
     for item in glob_content:
         if 'dev_users' in item or 'sys_admin_users' in item or 'alimas_users' in item:
-            for i in data[item] :
+            for i in glob_content[item] :
                 new_lst_users.append(i)
     
     return new_lst_users
