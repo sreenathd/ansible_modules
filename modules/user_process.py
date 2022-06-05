@@ -105,6 +105,7 @@ def main():
     errorcode = 0
     try:
         users_list = get_users_from_group_file()
+        user_ops = user_op()
         keys_path =  os.path.join(os.getcwd(), 'sshkeys') + '/'
         #'~/bootstrap/ansible/sshkeys/'
         for user_dict in users_list:
