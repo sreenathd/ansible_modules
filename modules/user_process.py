@@ -34,7 +34,7 @@ def default_constructor(loader, tag_suffix, node):
     else:
         raise NotImplementedError('Node: ' + str(type(node)))
 
-def get_users_from_group_file(grp_fn, grp_fld):
+def get_users_from_group_file():
     ''' Method to read the users list defined in group file'''
     yaml.add_multi_constructor('', default_constructor, Loader=yaml.SafeLoader)
     yaml.add_representer(GenericScalar, GenericScalar.to_yaml, Dumper=yaml.SafeDumper)
