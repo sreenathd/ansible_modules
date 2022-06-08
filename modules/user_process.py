@@ -71,6 +71,11 @@ class user_op:
     def user_add(self, username):
         cmd = ["useradd", username]
         return self.run_cmd(cmd)
+      
+    # Delete Users
+    def user_del(self, username):
+        cmd = ["userdel", "-f" , username]
+        return self.run_cmd(cmd)
 
     # Grant sudo permission
     def user_add_sudo(self , username, user_dir=None):
@@ -130,6 +135,10 @@ def main():
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
                 res += user_ops.add_authorised_key(keys_path + 'id_rsa_bsa.pub')
+                
+             elif "absent" == user_dict['state']:
+                #Delete the user
+                user_ops.user_del(user_dict['name'])
         
     except ValueError, vearg:
         errmsg = str(vearg) + ' stacktrace = {' + str(traceback.format_exc()) + '}'
