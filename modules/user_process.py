@@ -81,6 +81,11 @@ class user_op:
     def user_add_sudo(self , username, user_dir=None):
         cmd = ["usermod", "-a", "-G" , username]
         return self.run_cmd(cmd)
+      
+    # delete sudo permission
+    def user_del_sudo(self , username, user_dir=None):
+        cmd = [ "deluser", username,  "sudo"]
+        return self.run_cmd(cmd)
 
     # Verify whether user exists
     def user_verify( self, username):
@@ -117,11 +122,23 @@ def main():
         for user_dict in users_list:
             if 'present' == user_dict['state']:
                 #add the user
-                res = user_ops.user_add(user_dict['name'])
+                try:
+                    res = user_ops.user_add(user_dict['name'])
+                except:
+                    pass
 
                 #grant sudo permission
                 if 'present' == user_dict['sudo']:
-                    res += user_ops.user_add_sudo(user_dict['name'])
+                    try:
+                        res += user_ops.user_add_sudo(user_dict['name'])
+                    except:
+                        pass
+                
+                if "absent" == user_dict['sudo']:
+                    try:
+                        user_ops.user_del_sudo(user_dict['name'])
+                    except:
+                        pass
 
                 #verify whether user exists
                 res += user_ops.user_verify(user_dict['name'])
