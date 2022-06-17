@@ -77,7 +77,9 @@ class user_op:
           
     # Create Users
     def user_add(self, username):
-        if self.if_user_exist(username) == False:
+        if self.if_user_exist(username):
+            return True
+        else:
             cmd = ["useradd", username]
             return self.run_cmd(cmd)
       
@@ -142,13 +144,6 @@ def main():
                         res += user_ops.user_add_sudo(user_dict['name'])
                     except:
                         pass
-                
-                if "absent" == user_dict['sudo']:
-                    try:
-                        user_ops.user_del_sudo(user_dict['name'])
-                    except:
-                        pass
-
                 #verify whether user exists
                 res += user_ops.user_verify(user_dict['name'])
 
@@ -164,6 +159,11 @@ def main():
                 
              elif "absent" == user_dict['state']:
                 #Delete the user
+                if "absent" == user_dict['sudo']:
+                    try:
+                        user_ops.user_del_sudo(user_dict['name'])
+                    except:
+                        pass
                 user_ops.user_del(user_dict['name'])
         
     except ValueError, vearg:
