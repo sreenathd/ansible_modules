@@ -14,6 +14,7 @@ import traceback
 import os
 import yaml
 import subprocess
+import pwd
 from ansible.module_utils.basic import AnsibleModule
 
 class GenericScalar(object):
@@ -67,10 +68,18 @@ class user_op:
             #raise Exception("Error")
         return output
 
+    #check if user exits
+    def if_user_exist(self, username):
+        usernames = [x[0] for x in pwd.getpwall()]
+        if username in usernames:
+            return True
+        return False
+          
     # Create Users
     def user_add(self, username):
-        cmd = ["useradd", username]
-        return self.run_cmd(cmd)
+        if self.if_user_exist(username) == False:
+            cmd = ["useradd", username]
+            return self.run_cmd(cmd)
       
     # Delete Users
     def user_del(self, username):
