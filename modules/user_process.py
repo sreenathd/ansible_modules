@@ -17,6 +17,10 @@ import subprocess
 import pwd
 from ansible.module_utils.basic import AnsibleModule
 
+USERS_LIST = {
+    "users": {"required": False, "type": "list"}
+}
+
 class GenericScalar(object):
     ''' Generic class to handle tags prefixed with exclamation mark(!) '''
     def __init__(self, value, tag, style=None):
@@ -119,14 +123,30 @@ class user_op:
     def add_root_authorised_key(self, key_file):
         cmd = ["cat", key_file, ">>", "/root/.ssh/authorized_keys"]
         return self.run_cmd(cmd)
-    
+      
+def validate_users(users):
+    ''' Method to validate users data '''
+    req_fields = ['name', 'state', 'sudo', 'key']
+    for usr in users:
+        for fld in req_fields:
+            if fld not in usr.keys():
+                raise ValueError('mandatory field [%s] missing in %s' % (fld, usr))
 
+            if not str(usr[fld]).strip():
+                raise ValueError('mandatory field [%s] value cannot be empty [%s]' % (fld, usr))
+    
 def main():
     ''' Method to process user_list from Ansible '''
-    module = AnsibleModule(supports_check_mode=True)
+    module = AnsibleModule(argument_spec=USERS_LIST, supports_check_mode=True)
     errorcode = 0
     try:
-        users_list = get_users_from_group_file()
+        #users_list = get_users_from_group_file()
+        users_list = module.params['users']
+        if not users_list:
+            errorcode = 2
+            raise ValueError("'users' list cannot be empty.")
+        else:
+            validate_users(users_list)
         user_ops = user_op()
         keys_path =  os.path.join(os.getcwd(), 'sshkeys') + '/'
         #'~/bootstrap/ansible/sshkeys/'
