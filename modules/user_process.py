@@ -18,7 +18,7 @@ import pwd
 from ansible.module_utils.basic import AnsibleModule
 
 USERS_LIST = {
-    "users": {"required": False, "type": "list"}
+    "users": {"required": False, "type": "list"},
     "keys": {"required": False, "type": "dict"}
 }
 
@@ -65,7 +65,7 @@ class user_op:
     # Create Users
     def user_add(self, username):
         if self.if_user_exist(username):
-            return True
+            return ""
         else:
             cmd = ["useradd", username]
             return self.run_cmd(cmd)
