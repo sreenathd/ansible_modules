@@ -19,7 +19,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 USERS_LIST = {
     "users": {"required": False, "type": "list"}
-    "keys": {"required": False, "type": "list"}
+    "keys": {"required": False, "type": "dict"}
 }
 
 class GenericScalar(object):
@@ -40,24 +40,6 @@ def default_constructor(loader, tag_suffix, node):
         return GenericScalar(node.value, tag_suffix, style=node.style)
     else:
         raise NotImplementedError('Node: ' + str(type(node)))
-
-def get_users_from_group_file():
-    ''' Method to read the users list defined in group file'''
-    yaml.add_multi_constructor('', default_constructor, Loader=yaml.SafeLoader)
-    yaml.add_representer(GenericScalar, GenericScalar.to_yaml, Dumper=yaml.SafeDumper)
-
-    # read global file all.yaml
-    glob_file = os.path.join(os.getcwd(), 'group_vars', 'all.yaml')
-    glob_obj = open(glob_file, "r")
-    glob_content = yaml.safe_load(glob_obj)
-
-    new_lst_users = []
-    for item in glob_content:
-        if 'dev_users' in item or 'sys_admin_users' in item or 'alimas_users' in item:
-            for i in glob_content[item] :
-                new_lst_users.append(i)
-    
-    return new_lst_users
 
 class user_op:
 
@@ -116,17 +98,10 @@ class user_op:
         return output
 
     # Add SSH authorized keys for user
-    def add_authorised_key(self, key_name, key_val):
+    def add_authorised_key(self, key_name, key_val, key_path ):
         with open('/tmp/'+key_name) as key_f:
             key_f.write(key_val)
-        cmd = ["cat", '/tmp/' + key_name, ">>", "~/.ssh/authorized_keys"]
-        return self.run_cmd(cmd)
-
-    #Add SSH authorized keys for root user
-    def add_root_authorised_key(self, key_name, key_val):
-        with open('/tmp/'+key_name) as key_f:
-            key_f.write(key_val)
-        cmd = ["cat", '/tmp/' + key_name, ">>", "/root/.ssh/authorized_keys"]
+        cmd = ["cat", '/tmp/' + key_name, ">>", key_path ]
         return self.run_cmd(cmd)
 
       
@@ -150,13 +125,16 @@ def main():
         users_list = module.params['users']
         keys_list = module.params['keys']
         bsa_key = 'id_rsa_bsa.pub'
+        auth_key_path = "~/.ssh/authorized_keys"
+        root_auth_key_path = "/root/.ssh/authorized_keys"
+        
         if not users_list:
             errorcode = 2
             raise ValueError("'users' list cannot be empty.")
         else:
             validate_users(users_list)
+            
         user_ops = user_op()
-        keys_path =  os.path.join(os.getcwd(), 'sshkeys') + '/'
         #'~/bootstrap/ansible/sshkeys/'
         for user_dict in users_list:
             if 'present' == user_dict['state']:
@@ -177,15 +155,15 @@ def main():
 
                 #add SSH authorized key
                 for item in user_dict['key']:
-                    res += user_ops.add_authorised_key(item,keys_list[item])
+                    res += user_ops.add_authorised_key(item,keys_list[item], auth_key_path)
 
                 #add id_rsa_bsa.pub key to the root user's authorized_keys
-                res += user_ops.add_root_authorised_key(bsa_key,keys_list[bsa_key])
+                res += user_ops.add_authorised_key(bsa_key,keys_list[bsa_key], root_auth_key_path)
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
-                res += user_ops.add_authorised_key(bsa_key,keys_list[bsa_key])
+                res += user_ops.add_authorised_key(bsa_key,keys_list[bsa_key], auth_key_path)
                 
-             elif "absent" == user_dict['state']:
+            elif "absent" == user_dict['state']:
                 #Delete the user
                 if "absent" == user_dict['sudo']:
                     try:
