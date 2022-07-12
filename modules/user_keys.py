@@ -53,7 +53,7 @@ def main():
     try:
         users_list = module.params['users']
         bsa_key = 'id_rsa_bsa.pub'
-        res = []
+        res = {}
         if not users_list:
             errorcode = 2
             raise ValueError("'users' list cannot be empty.")
@@ -66,16 +66,12 @@ def main():
             #add SSH authorized key to a dict
             for item in user_dict['key']:
                 with open(keys_path + bsa_key , "r") as kfo:
-                    out = {}
                     str_keyinfo = kfo.read().replace('\n', '')
-                    out[item] = str_keyinfo
-                    res.append(out)
+                    res[item] = str_keyinfo
                 
         with open(keys_path + bsa_key , "r") as kfo:
-            out = {}
             str_keyinfo = kfo.read().replace('\n', '')
-            out[bsa_key] = str_keyinfo
-            res.append(out)
+            res[bsa_key] = str_keyinfo
             
     except : #ValueError, vearg:
         errmsg = str(vearg) + ' stacktrace = {' + str(traceback.format_exc()) + '}'
