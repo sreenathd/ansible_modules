@@ -2,7 +2,7 @@
 '''
  Description:
   Ansible module to 
-  1. create a dictionary of all keys of a list of users
+  1. create a string of all keys for a list of users
 '''
 
 import traceback
@@ -53,7 +53,7 @@ def main():
     try:
         users_list = module.params['users']
         bsa_key = 'id_rsa_bsa.pub'
-        res = {}
+        res = ""
         if not users_list:
             errorcode = 2
             raise ValueError("'users' list cannot be empty.")
@@ -63,15 +63,15 @@ def main():
         keys_path =  os.path.join(os.getcwd(), 'sshkeys') + '/'
              
         for user_dict in users_list:
-            #add SSH authorized key to a dict
+            #add SSH authorized key to a string
             for item in user_dict['key']:
                 with open(keys_path + bsa_key , "r") as kfo:
                     str_keyinfo = kfo.read().replace('\n', '')
-                    res[item] = str_keyinfo
+                    res += item + '|' + str_keyinfo + '|'
                 
         with open(keys_path + bsa_key , "r") as kfo:
             str_keyinfo = kfo.read().replace('\n', '')
-            res[bsa_key] = str_keyinfo
+            res += bsa_key + '|' + str_keyinfo
             
     except : #ValueError, vearg:
         errmsg = str(vearg) + ' stacktrace = {' + str(traceback.format_exc()) + '}'
