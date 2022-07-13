@@ -19,7 +19,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 USERS_LIST = {
     "users": {"required": False, "type": "list"},
-    "keys": {"required": False, "type": "dict"}
+    "userdata": {"required": False, "type": "str"}
 }
 
 class GenericScalar(object):
@@ -65,7 +65,7 @@ class user_op:
     # Create Users
     def user_add(self, username):
         if self.if_user_exist(username):
-            return ""
+            return True
         else:
             cmd = ["useradd", username]
             return self.run_cmd(cmd)
@@ -99,7 +99,7 @@ class user_op:
 
     # Add SSH authorized keys for user
     def add_authorised_key(self, key_name, key_val, key_path ):
-        with open('/tmp/'+key_name) as key_f:
+        with open('/tmp/'+key_name, 'w') as key_f:
             key_f.write(key_val)
         cmd = ["cat", '/tmp/' + key_name, ">>", key_path ]
         return self.run_cmd(cmd)
@@ -123,10 +123,15 @@ def main():
     try:
         #users_list = get_users_from_group_file()
         users_list = module.params['users']
-        keys_list = module.params['keys']
+        keys_list = module.params['userdata']['meta']
         bsa_key = 'id_rsa_bsa.pub'
         auth_key_path = "~/.ssh/authorized_keys"
         root_auth_key_path = "/root/.ssh/authorized_keys"
+        
+        keys_list = keys_list.split("|")
+        it = iter(keys_list)
+        keys_dct = dict(zip(it, it))
+        #keys_dct = {keys_list[i]: keys_list[i + 1] for i in range(0, len(keys_list), 2)}
         
         if not users_list:
             errorcode = 2
@@ -155,13 +160,13 @@ def main():
 
                 #add SSH authorized key
                 for item in user_dict['key']:
-                    res += user_ops.add_authorised_key(item,keys_list[item], auth_key_path)
+                    res += user_ops.add_authorised_key(item,keys_dct[item], auth_key_path)
 
                 #add id_rsa_bsa.pub key to the root user's authorized_keys
-                res += user_ops.add_authorised_key(bsa_key,keys_list[bsa_key], root_auth_key_path)
+                res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], root_auth_key_path)
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
-                res += user_ops.add_authorised_key(bsa_key,keys_list[bsa_key], auth_key_path)
+                res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], auth_key_path)
                 
             elif "absent" == user_dict['state']:
                 #Delete the user
