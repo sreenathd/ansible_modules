@@ -123,12 +123,14 @@ def main():
     try:
         #users_list = get_users_from_group_file()
         users_list = module.params['users']
-        keys_list = module.params['userdata']['meta']
+        keys_list = module.params['userdata']
         bsa_key = 'id_rsa_bsa.pub'
         auth_key_path = "~/.ssh/authorized_keys"
         root_auth_key_path = "/root/.ssh/authorized_keys"
         
         keys_list = keys_list.split("|")
+        keys_list[0] = keys_list[0].split('\'')[-1]
+        keys_list[-1] = keys_list[-1].split('\'')[0]
         it = iter(keys_list)
         keys_dct = dict(zip(it, it))
         #keys_dct = {keys_list[i]: keys_list[i + 1] for i in range(0, len(keys_list), 2)}
