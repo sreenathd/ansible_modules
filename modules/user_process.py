@@ -19,7 +19,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 USERS_LIST = {
     "users": {"required": False, "type": "list"},
-    "userdata": {"required": False, "type": "str"}
+    "userdata": {"required": False, "type": "dict"}
 }
 
 class GenericScalar(object):
@@ -65,7 +65,7 @@ class user_op:
     # Create Users
     def user_add(self, username):
         if self.if_user_exist(username):
-            return True
+            return "user created"
         else:
             cmd = ["useradd", username]
             return self.run_cmd(cmd)
@@ -123,14 +123,14 @@ def main():
     try:
         #users_list = get_users_from_group_file()
         users_list = module.params['users']
-        keys_list = module.params['userdata']
+        keys_list = module.params['userdata']['key_str']['kestr']
         bsa_key = 'id_rsa_bsa.pub'
         auth_key_path = "~/.ssh/authorized_keys"
         root_auth_key_path = "/root/.ssh/authorized_keys"
         
         keys_list = keys_list.split("|")
-        keys_list[0] = keys_list[0].split('\'')[-1]
-        keys_list[-1] = keys_list[-1].split('\'')[0]
+        #keys_list[0] = keys_list[0].split('\'')[-1]
+        #keys_list[-1] = keys_list[-1].split('\'')[0]
         it = iter(keys_list)
         keys_dct = dict(zip(it, it))
         #keys_dct = {keys_list[i]: keys_list[i + 1] for i in range(0, len(keys_list), 2)}
