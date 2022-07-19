@@ -65,7 +65,7 @@ def main():
         for user_dict in users_list:
             #add SSH authorized key to a string
             for item in user_dict['key']:
-                with open(keys_path + bsa_key , "r") as kfo:
+                with open(keys_path + item , "r") as kfo:
                     str_keyinfo = kfo.read().replace('\n', '')
                     res += item + '|' + str_keyinfo + '|'
                 
