@@ -78,7 +78,9 @@ def main():
         module.fail_json(msg=errmsg)
 
     localchanged = True if errorcode == 0 else False
-    module.exit_json(change=localchanged, meta=res)
+    #module.exit_json(change=localchanged, meta=res)
+    results = dict(changed=False, key_str=dict(kestr = res))
+    module.exit_json(**results)
 
 
 if __name__ == "__main__":
