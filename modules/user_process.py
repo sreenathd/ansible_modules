@@ -1,7 +1,7 @@
 #!/usr/bin/python
 '''
  Description:
-  Ansible module to 
+  Ansible module to
   1. merge different types of users lists
   2. Create Users
   3. Grant sudo permission
@@ -51,8 +51,8 @@ class user_op:
         if error:
             error = error.decode("utf-8")
         if p.returncode != 0:
-            print(error)
-            #raise Exception("Error")
+            #print(error)
+            raise ValueError("Error" + str(error) + str(output))
         return output
 
     #check if user exits
@@ -61,33 +61,33 @@ class user_op:
         if username in usernames:
             return True
         return False
-          
+
     # Create Users
     def user_add(self, username):
         if self.if_user_exist(username):
-            return "user created"
+            return " user created " + username
         else:
-            cmd = ["useradd", username]
+            cmd = ["sudo", "/usr/sbin/useradd", username]
             return self.run_cmd(cmd)
-      
+
     # Delete Users
     def user_del(self, username):
-        cmd = ["userdel", "-f" , username]
+        cmd = ["/usr/sbin/userdel", "-f" , username]
         return self.run_cmd(cmd)
 
     # Grant sudo permission
     def user_add_sudo(self , username, user_dir=None):
-        cmd = ["usermod", "-a", "-G" , username]
+        cmd = ["/usr/sbin/usermod", "-a", "-G" , username]
         return self.run_cmd(cmd)
-      
+
     # delete sudo permission
     def user_del_sudo(self , username, user_dir=None):
-        cmd = [ "deluser", username,  "sudo"]
+        cmd = [ "/usr/sbin/userdel", username,  "sudo"]
         return self.run_cmd(cmd)
 
     # Verify whether user exists
     def user_verify( self, username):
-        ps = subprocess.Popen(('getent', 'passwd', username), stdout=subprocess.PIPE)
+        ps = subprocess.Popen(('/usr/bin/getent', 'passwd', username), stdout=subprocess.PIPE)
         output, error = ps.communicate()
         if output:
             output = output.strip().decode("utf-8")
@@ -101,10 +101,11 @@ class user_op:
     def add_authorised_key(self, key_name, key_val, key_path ):
         with open('/tmp/'+key_name, 'w') as key_f:
             key_f.write(key_val)
-        cmd = ["cat", '/tmp/' + key_name, ">>", key_path ]
+        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name, ">>", key_path ]
+        raise ValueError('error' + " ".join(cmd))
         return self.run_cmd(cmd)
 
-      
+
 def validate_users(users):
     ''' Method to validate users data '''
     req_fields = ['name', 'state', 'sudo', 'key']
@@ -115,7 +116,7 @@ def validate_users(users):
 
             if not str(usr[fld]).strip():
                 raise ValueError('mandatory field [%s] value cannot be empty [%s]' % (fld, usr))
-    
+
 def main():
     ''' Method to process user_list from Ansible '''
     module = AnsibleModule(argument_spec=USERS_LIST, supports_check_mode=True)
@@ -124,32 +125,33 @@ def main():
         #users_list = get_users_from_group_file()
         users_list = module.params['users']
         keys_list = module.params['userdata']['key_str']['kestr']
+        #keys_list = module.params['userdata']
         bsa_key = 'id_rsa_bsa.pub'
         auth_key_path = "~/.ssh/authorized_keys"
         root_auth_key_path = "/root/.ssh/authorized_keys"
-        
+
         keys_list = keys_list.split("|")
         #keys_list[0] = keys_list[0].split('\'')[-1]
         #keys_list[-1] = keys_list[-1].split('\'')[0]
         it = iter(keys_list)
         keys_dct = dict(zip(it, it))
         #keys_dct = {keys_list[i]: keys_list[i + 1] for i in range(0, len(keys_list), 2)}
-        
+
         if not users_list:
             errorcode = 2
             raise ValueError("'users' list cannot be empty.")
         else:
             validate_users(users_list)
-            
+
         user_ops = user_op()
         #'~/bootstrap/ansible/sshkeys/'
         for user_dict in users_list:
             if 'present' == user_dict['state']:
                 #add the user
-                try:
-                    res = user_ops.user_add(user_dict['name'])
-                except:
-                    pass
+                #try:
+                res = user_ops.user_add(user_dict['name'])
+                #except:
+                #    pass
 
                 #grant sudo permission
                 if 'present' == user_dict['sudo']:
@@ -169,7 +171,7 @@ def main():
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
                 res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], auth_key_path)
-                
+
             elif "absent" == user_dict['state']:
                 #Delete the user
                 if "absent" == user_dict['sudo']:
@@ -178,7 +180,7 @@ def main():
                     except:
                         pass
                 user_ops.user_del(user_dict['name'])
-        
+
     except ValueError, vearg:
         errmsg = str(vearg) + ' stacktrace = {' + str(traceback.format_exc()) + '}'
         module.fail_json(msg=errmsg)
