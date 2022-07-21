@@ -16,6 +16,7 @@ import yaml
 import subprocess
 import pwd
 from ansible.module_utils.basic import AnsibleModule
+import re
 
 USERS_LIST = {
     "users": {"required": False, "type": "list"},
