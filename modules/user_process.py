@@ -99,22 +99,25 @@ class user_op:
 
     # Add SSH authorized keys for user
     def add_authorised_key(self, key_name, key_val, key_path ):
-        with open('/tmp/'+key_name, 'w') as key_f:
-            key_f.write(key_val)
-        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name ]
-        with open(key_path, 'ab') as file:
-            cmd = ["/usr/bin/cat", '/tmp/' + "inf" ]
-            p = subprocess.Popen(cmd, stdout=file, stderr=subprocess.PIPE)
-            output, error = p.communicate()
-            if output:
-                output = output.strip().decode("utf-8")
-            if error:
-                error = error.decode("utf-8")
-            if p.returncode != 0:
-                #print(error)
-                raise ValueError("Error" + str(error) + str(output))
-        return output
+        with open(key_path, 'r') as keyfile:
+            if key_val in keyfile.read():
+                return "Key already present"
+            else: 
+                keyfile.write(key_val)
+        return "Key added successfully"
 
+    # Remove SSH authorized keys for user
+    def rem_authorised_key(self, key_val, key_path ):
+        regex = f"^.*(:{''.join(key_val)}).*\n"
+        subst = ""
+        with open(key_path,'r') as keyfile:
+            lines = keyfile.read()
+            if key_val not in lines:
+                return "Key not present"
+        result = re.sub(regex, subst, lines, re.MULTILINE) 
+        with open(key_path, 'w') as newfile:
+            newfile.write(result)
+        return "Key remove successfully"
 
 def validate_users(users):
     ''' Method to validate users data '''
@@ -187,6 +190,8 @@ def main():
                 if "absent" == user_dict['sudo']:
                     try:
                         user_ops.user_del_sudo(user_dict['name'])
+                        for item in user_dict['key']:
+                            user_ops.rem_authorised_key(keys_dct[item],auth_key_path)
                     except:
                         pass
                 user_ops.user_del(user_dict['name'])
