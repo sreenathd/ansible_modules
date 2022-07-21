@@ -101,9 +101,19 @@ class user_op:
     def add_authorised_key(self, key_name, key_val, key_path ):
         with open('/tmp/'+key_name, 'w') as key_f:
             key_f.write(key_val)
-        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name, ">>", key_path ]
-        raise ValueError('error' + " ".join(cmd))
-        return self.run_cmd(cmd)
+        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name ]
+        with open(key_path, 'ab') as file:
+            cmd = ["/usr/bin/cat", '/tmp/' + "inf" ]
+            p = subprocess.Popen(cmd, stdout=file, stderr=subprocess.PIPE)
+            output, error = p.communicate()
+            if output:
+                output = output.strip().decode("utf-8")
+            if error:
+                error = error.decode("utf-8")
+            if p.returncode != 0:
+                #print(error)
+                raise ValueError("Error" + str(error) + str(output))
+        return output
 
 
 def validate_users(users):
