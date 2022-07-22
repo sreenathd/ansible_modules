@@ -106,6 +106,23 @@ class user_op:
             else: 
                 keyfile.write(key_val)
         return "Key added successfully"
+       
+    # Add SSH authorized keys for user
+    def add_authorised_key_root(self, key_name, key_val, key_path ):
+        output = ""
+        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name ]
+        with open('/tmp/' + key_name, 'w') as tmpfile:
+            tmpfile.write(key_val)
+        with open(key_path, 'ab') as keyfile:
+            p = subprocess.Popen(cmd, stdout=keyfile, stderr=subprocess.PIPE)
+            output, error = p.communicate()
+            if output:
+                output = output.strip().decode("utf-8")
+            if error:
+                error = error.decode("utf-8")
+            if p.returncode != 0:
+                raise ValueError("Error" + str(error) + str(output))
+        return output
 
     # Remove SSH authorized keys for user
     def rem_authorised_key(self, key_val, key_path ):
@@ -181,7 +198,7 @@ def main():
                     res += user_ops.add_authorised_key(item,keys_dct[item], auth_key_path)
 
                 #add id_rsa_bsa.pub key to the root user's authorized_keys
-                res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], root_auth_key_path)
+                res += user_ops.add_authorised_key_root(bsa_key,keys_dct[bsa_key], root_auth_key_path)
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
                 res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], auth_key_path)
@@ -191,8 +208,6 @@ def main():
                 if "absent" == user_dict['sudo']:
                     try:
                         user_ops.user_del_sudo(user_dict['name'])
-                        for item in user_dict['key']:
-                            user_ops.rem_authorised_key(keys_dct[item],auth_key_path)
                     except:
                         pass
                 user_ops.user_del(user_dict['name'])
