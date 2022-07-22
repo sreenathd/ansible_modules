@@ -107,21 +107,20 @@ class user_op:
                 keyfile.write(key_val)
         return "Key added successfully"
        
-    # Add SSH authorized keys for user
+    # Add SSH authorized keys for root
     def add_authorised_key_root(self, key_name, key_val, key_path ):
         output = ""
-        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name ]
+        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name, ">>",  key_path ]
         with open('/tmp/' + key_name, 'w') as tmpfile:
             tmpfile.write(key_val)
-        with open(key_path, 'ab') as keyfile:
-            p = subprocess.Popen(cmd, stdout=keyfile, stderr=subprocess.PIPE)
-            output, error = p.communicate()
-            if output:
-                output = output.strip().decode("utf-8")
-            if error:
-                error = error.decode("utf-8")
-            if p.returncode != 0:
-                raise ValueError("Error" + str(error) + str(output))
+        p = subprocess.Popen(cmd, shell=True , stderr=subprocess.PIPE)
+        output, error = p.communicate()
+        if output:
+            output = output.strip().decode("utf-8")
+        if error:
+            error = error.decode("utf-8")
+        if p.returncode != 0:
+            raise ValueError("Error" + str(error) + str(output))
         return output
 
     # Remove SSH authorized keys for user
