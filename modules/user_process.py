@@ -100,28 +100,34 @@ class user_op:
 
     # Add SSH authorized keys for user
     def add_authorised_key(self, key_name, key_val, key_path ):
-        with open(key_path, 'r') as keyfile:
+        try:
+            os.mkdir(key_path)
+        except:
+            pass
+        try:
+            with open(key_path + 'authorized_keys' , 'w') as fp:
+                pass
+        except:
+            pass
+        with open(key_path + 'authorized_keys', 'r') as keyfile:
             if key_val in keyfile.read():
                 return "Key already present"
-            else: 
+        with open(key_path + 'authorized_keys', 'a') as keyfile:
                 keyfile.write(key_val)
         return "Key added successfully"
        
     # Add SSH authorized keys for root
     def add_authorised_key_root(self, key_name, key_val, key_path ):
-        output = ""
-        cmd = ["sudo", "/usr/bin/cat", '/tmp/' + key_name, ">>",  key_path ]
-        with open('/tmp/' + key_name, 'w') as tmpfile:
-            tmpfile.write(key_val)
-        p = subprocess.Popen(cmd, shell=True , stderr=subprocess.PIPE)
-        output, error = p.communicate()
-        if output:
-            output = output.strip().decode("utf-8")
-        if error:
-            error = error.decode("utf-8")
-        if p.returncode != 0:
-            raise ValueError("Error" + str(error) + str(output))
-        return output
+        try:
+            os.mkdir(key_path)
+        except:
+            pass
+        with open(key_path + 'authorized_keys', 'r') as keyfile:
+            if key_val in keyfile.read():
+                return "Key already present"
+        with open(key_path + 'authorized_keys', 'a') as keyfile:
+                keyfile.write(key_val)
+        return "Key added successfully"
 
     # Remove SSH authorized keys for user
     def rem_authorised_key(self, key_val, key_path ):
@@ -158,7 +164,7 @@ def main():
         #keys_list = module.params['userdata']
         bsa_key = 'id_rsa_bsa.pub'
         auth_key_path = "~/.ssh/authorized_keys"
-        root_auth_key_path = "/root/.ssh/authorized_keys"
+        root_auth_key_path = "/root/.ssh/"
 
         keys_list = keys_list.split("|")
         #keys_list[0] = keys_list[0].split('\'')[-1]
@@ -176,6 +182,8 @@ def main():
         user_ops = user_op()
         #'~/bootstrap/ansible/sshkeys/'
         for user_dict in users_list:
+            auth_key_path = '/home/' + user_dict['name'] + '/.ssh/' 
+            auth_key = auth_key_path +  'authorized_keys'
             if 'present' == user_dict['state']:
                 #add the user
                 #try:
@@ -194,13 +202,13 @@ def main():
 
                 #add SSH authorized key
                 for item in user_dict['key']:
-                    res += user_ops.add_authorised_key(item,keys_dct[item], auth_key_path)
+                    res += user_ops.add_authorised_key(item,keys_dct[item] + '\n', auth_key_path)
 
                 #add id_rsa_bsa.pub key to the root user's authorized_keys
                 res += user_ops.add_authorised_key_root(bsa_key,keys_dct[bsa_key], root_auth_key_path)
 
                 #add rid_rsa_bsa.pub key to the bsa user's authorized_keys
-                res += user_ops.add_authorised_key(bsa_key,keys_dct[bsa_key], auth_key_path)
+                res += user_ops.add_authorised_key_root(bsa_key,keys_dct[bsa_key], auth_key_path)
 
             elif "absent" == user_dict['state']:
                 #Delete the user
