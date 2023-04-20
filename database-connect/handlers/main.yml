@@ -1,0 +1,10 @@
+---
+# handlers file for database-connect
+- name: db connect
+  include_vars: vars.yaml
+  mysql_db:
+    name: "{{db_name}}"
+    login_host: "{{db_host}}"
+    login_user: "{{db_user}}"
+    login_password: "{{db_password}}"
+    state: dump
